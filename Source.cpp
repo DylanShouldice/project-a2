@@ -53,10 +53,12 @@ int main(void) {
 		return 1;
 	}
 
+#ifdef _DEBUG
 	std::cout << "Loaded " << students.size() << " students.\n";
 	for (const STUDENT_DATA& student : students) {
 		std::cout << student.firstName << ' ' << student.lastName << '\n';
 	}
+#endif
 
 	return 0;
 }
