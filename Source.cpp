@@ -6,6 +6,9 @@
 struct STUDENT_DATA {
 	std::string firstName;
 	std::string lastName;
+#ifdef PRE_RELEASE
+	std::string email;
+#endif
 };
 
 std::string trim(const std::string& name) {
@@ -18,9 +21,17 @@ std::string trim(const std::string& name) {
 }
 
 int main(void) {
-	std::ifstream inputFile("StudentData.txt");
+#ifdef PRE_RELEASE
+	std::cout << "Running pre-release source code.\n";
+	const char* inputFileName = "StudentData_Emails.txt";
+#else
+	std::cout << "Running standard source code.\n";
+	const char* inputFileName = "StudentData.txt";
+#endif
+
+	std::ifstream inputFile(inputFileName);
 	if (!inputFile) {
-		std::cerr << "Unable to open StudentData.txt\n";
+		std::cerr << "Unable to open " << inputFileName << '\n';
 		return 1;
 	}
 
@@ -37,10 +48,24 @@ int main(void) {
 			return 1;
 		}
 
-		// StudentData.txt stores each record as LastName, FirstName.
+		// Both files store the last name before the first name.
 		STUDENT_DATA student;
 		student.lastName = trim(line.substr(0, comma));
+#ifdef PRE_RELEASE
+		const auto emailComma = line.find(',', comma + 1);
+		if (emailComma == std::string::npos) {
+			std::cerr << "Missing email in student record: " << line << '\n';
+			return 1;
+		}
+		student.firstName = trim(line.substr(comma + 1, emailComma - comma - 1));
+		student.email = trim(line.substr(emailComma + 1));
+		if (student.email.empty()) {
+			std::cerr << "Missing email in student record: " << line << '\n';
+			return 1;
+		}
+#else
 		student.firstName = trim(line.substr(comma + 1));
+#endif
 		if (student.firstName.empty() || student.lastName.empty()) {
 			std::cerr << "Invalid student record: " << line << '\n';
 			return 1;
@@ -49,14 +74,18 @@ int main(void) {
 	}
 
 	if (inputFile.bad()) {
-		std::cerr << "Error reading StudentData.txt\n";
+		std::cerr << "Error reading " << inputFileName << '\n';
 		return 1;
 	}
 
 #ifdef _DEBUG
 	std::cout << "Loaded " << students.size() << " students.\n";
 	for (const STUDENT_DATA& student : students) {
-		std::cout << student.firstName << ' ' << student.lastName << '\n';
+		std::cout << student.firstName << ' ' << student.lastName;
+#ifdef PRE_RELEASE
+		std::cout << ", " << student.email;
+#endif
+		std::cout << '\n';
 	}
 #endif
 
